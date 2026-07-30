@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Source Library | LG</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+  :root{
+    --bg:#0B0B0C;
+    --sidebar:#0E0E10;
+    --surface:#17171A;
+    --surface-hover:#1D1D21;
+    --border:#26262A;
+    --border-soft:#1E1E22;
+    --text:#F2F1EF;
+    --sub:#9C9BA0;
+    --faint:#67666B;
+    --lg-red:#A50034;
+    --lg-red-bright:#E4003A;
+    --lg-red-soft:rgba(165,0,52,.22);
+    --lg-red-line:rgba(228,0,58,.35);
+    --ok:#2FAE6B;
+    --ok-bg:rgba(47,174,107,.14);
+    --wait:#D9A441;
+    --wait-bg:rgba(217,164,65,.14);
+    --radius:12px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Pretendard',-apple-system,'Malgun Gothic',sans-serif;
+    background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:#2A2A2E;border-radius:8px;}
+
+  .shell{display:flex;min-height:100vh;}
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    width:250px;flex:0 0 250px;background:var(--sidebar);border-right:1px solid var(--border-soft);
+    padding:18px 14px;display:flex;flex-direction:column;gap:18px;position:sticky;top:0;height:100vh;overflow-y:auto;
+  }
+  .brand{display:flex;align-items:center;gap:9px;padding:6px 6px 4px;}
+  .brand .mark{
+    width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--lg-red-bright),var(--lg-red));
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12.5px;flex:0 0 auto;
+  }
+  .brand .name{font-weight:700;font-size:15px;letter-spacing:-.2px;}
+  .brand .name small{display:block;font-size:10.5px;color:var(--faint);font-weight:500;}
+
+  .register-btn{
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    background:linear-gradient(135deg,var(--lg-red-bright),var(--lg-red));
+    color:#fff;border:none;padding:11px 14px;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;
+  }
+  .register-btn:hover{filter:brightness(1.08);}
+
+  .nav-group{display:flex;flex-direction:column;gap:2px;}
+  .nav-label{font-size:10.5px;color:var(--faint);font-weight:700;letter-spacing:.6px;padding:10px 10px 4px;text-transform:uppercase;}
+  .nav-item{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:9px 10px;border-radius:8px;font-size:13.5px;font-weight:600;color:var(--sub);cursor:pointer;
+  }
+  .nav-item .left{display:flex;align-items:center;gap:9px;}
+  .nav-item svg{width:16px;height:16px;stroke:currentColor;flex:0 0 auto;}
+  .nav-item:hover{background:var(--surface-hover);color:var(--text);}
+  .nav-item.active{background:var(--lg-red-soft);color:#fff;box-shadow:inset 0 0 0 1px var(--lg-red-line);}
+  .nav-item .count{font-size:11px;color:var(--faint);font-weight:600;}
+  .nav-item.active .count{color:#fff;opacity:.75;}
+  .sub-nav{display:flex;flex-direction:column;gap:1px;margin:2px 0 4px 14px;border-left:1px solid var(--border-soft);padding-left:10px;}
+  .sub-nav .nav-item{padding:7px 10px;font-size:13px;font-weight:500;}
+
+  /* ---------- MAIN ---------- */
+  .main{flex:1;min-width:0;padding:20px 28px 60px;}
+  .topbar{display:flex;gap:10px;align-items:center;margin-bottom:22px;flex-wrap:wrap;}
+  .search-box{flex:1;min-width:220px;position:relative;}
+  .search-box svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--faint);}
+  .search-box input{
+    width:100%;padding:10.5px 14px 10.5px 38px;border-radius:9px;border:1px solid var(--border);
+    background:var(--surface);color:var(--text);font-size:13.5px;font-family:inherit;
+  }
+  .search-box input::placeholder{color:var(--faint);}
+  .search-box input:focus{outline:none;border-color:var(--lg-red-bright);}
+  select.sort-select{
+    background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:9px;
+    padding:10px 12px;font-size:13px;font-family:inherit;font-weight:600;cursor:pointer;
+  }
+  .icon-toggle-group{display:flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;}
+  .icon-toggle-group button{
+    background:var(--surface);border:none;color:var(--faint);padding:9px 11px;cursor:pointer;display:flex;
+  }
+  .icon-toggle-group button.active{background:var(--lg-red-soft);color:#fff;}
+  .icon-toggle-group button svg{width:15px;height:15px;stroke:currentColor;}
+
+  .page-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px;}
+  .page-head h1{font-size:22px;margin:0;font-weight:700;letter-spacing:-.3px;}
+  .page-head .count-line{font-size:13px;color:var(--sub);}
+
+  .note-banner{
+    background:var(--lg-red-soft);border:1px solid var(--lg-red-line);color:#FBD9E2;
+    padding:12px 16px;border-radius:10px;font-size:12.5px;line-height:1.65;margin-bottom:20px;
+  }
+
+  /* ---------- GRID / CARDS ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:16px;}
+  .grid.list-mode{grid-template-columns:1fr;gap:8px;}
+
+  .card{background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;}
+  .card:hover{border-color:var(--border);}
+  .thumb{
+    position:relative;height:148px;display:flex;align-items:center;justify-content:center;
+  }
+  .thumb svg{width:34px;height:34px;stroke:rgba(255,255,255,.55);opacity:.9;}
+  .badge{
+    position:absolute;top:10px;left:10px;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);
+    color:#fff;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:6px;display:flex;align-items:center;gap:5px;
+  }
+  .badge svg{width:11px;height:11px;}
+  .fav-btn{
+    position:absolute;top:9px;right:9px;width:26px;height:26px;border-radius:50%;border:none;
+    background:rgba(0,0,0,.35);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .fav-btn svg{width:14px;height:14px;stroke:#fff;fill:none;}
+  .fav-btn.active svg{fill:#FFC53D;stroke:#FFC53D;}
+  .dur-badge{
+    position:absolute;bottom:9px;right:9px;background:rgba(0,0,0,.55);color:#fff;font-size:10.5px;font-weight:700;
+    padding:3px 7px;border-radius:5px;
+  }
+  .card-body{padding:13px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1;}
+  .card-title{font-size:14px;font-weight:700;line-height:1.4;margin:0;
+    overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+  .card-meta{font-size:11.5px;color:var(--faint);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .card-meta .dl{display:flex;align-items:center;gap:4px;}
+  .card-meta svg{width:11px;height:11px;stroke:currentColor;}
+  .tags{display:flex;gap:5px;flex-wrap:wrap;}
+  .tag{font-size:10.5px;color:var(--sub);background:#111113;border:1px solid var(--border-soft);padding:2.5px 7px;border-radius:5px;}
+  .owner-line{font-size:11.5px;color:var(--sub);}
+  .card-actions{display:flex;gap:6px;margin-top:2px;}
+  .card-actions button{border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;padding:8px 0;border:none;}
+  .open-btn{flex:1;background:var(--lg-red);color:#fff;}
+  .open-btn:hover{background:var(--lg-red-bright);}
+  .perm-btn{flex:0 0 auto;padding:8px 10px;background:transparent;border:1px solid var(--border);color:var(--sub);}
+  .perm-btn:hover{color:#fff;border-color:var(--faint);}
+  .del-btn{flex:0 0 32px;background:transparent;border:1px solid var(--border);color:var(--faint);}
+  .del-btn:hover{color:var(--lg-red-bright);border-color:var(--lg-red-bright);}
+
+  /* list mode overrides */
+  .grid.list-mode .card{flex-direction:row;align-items:center;}
+  .grid.list-mode .thumb{width:120px;height:74px;flex:0 0 auto;}
+  .grid.list-mode .card-body{flex-direction:row;align-items:center;padding:10px 14px;gap:16px;}
+  .grid.list-mode .card-title{flex:0 0 220px;-webkit-line-clamp:1;}
+  .grid.list-mode .tags{display:none;}
+  .grid.list-mode .card-meta{flex:0 0 auto;width:180px;}
+  .grid.list-mode .owner-line{flex:0 0 auto;width:140px;}
+  .grid.list-mode .card-actions{margin-left:auto;width:220px;}
+  .grid.list-mode .dur-badge{display:none;}
+
+  .empty{
+    text-align:center;padding:80px 20px;color:var(--sub);border:1px dashed var(--border);border-radius:var(--radius);
+    background:var(--surface);grid-column:1/-1;
+  }
+  .empty b{display:block;color:var(--text);font-size:15px;margin-bottom:6px;}
+
+  /* ---------- REQUESTS LIST ---------- */
+  .req-list{display:flex;flex-direction:column;gap:10px;}
+  .req-item{background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--radius);
+    padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;}
+  .req-item .a-title{font-weight:700;font-size:14px;}
+  .req-item .r-meta{font-size:12px;color:var(--sub);margin-top:3px;}
+  .status-pill{font-size:11.5px;font-weight:700;padding:5px 12px;border-radius:999px;}
+  .status-pill.wait{background:var(--wait-bg);color:var(--wait);}
+  .status-pill.done{background:var(--ok-bg);color:var(--ok);}
+  .ghost-btn{padding:8px 14px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12.5px;font-weight:600;cursor:pointer;}
+
+  /* ---------- MODAL ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px;z-index:60;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;padding:26px;}
+  .modal h2{font-size:17px;margin:0 0 4px;font-weight:700;}
+  .modal .sub{font-size:12.5px;color:var(--sub);margin-bottom:18px;}
+  .field{margin-bottom:13px;}
+  .field label{display:block;font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px;}
+  .field .hint{font-weight:400;color:var(--faint);margin-left:3px;}
+  .field input,.field select,.field textarea{
+    width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);
+    background:#101012;color:var(--text);font-size:13.5px;font-family:inherit;
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--lg-red-bright);}
+  .field textarea{resize:vertical;min-height:56px;}
+  .field-row{display:flex;gap:10px;}
+  .field-row .field{flex:1;}
+  .modal-actions{display:flex;gap:8px;margin-top:18px;}
+  .modal-actions button{flex:1;padding:11px 0;border-radius:8px;font-size:13.5px;font-weight:700;cursor:pointer;border:none;}
+  .cancel-btn{background:transparent;border:1px solid var(--border) !important;color:var(--sub);}
+  .submit-btn{background:linear-gradient(135deg,var(--lg-red-bright),var(--lg-red));color:#fff;}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#fff;color:#111;
+    padding:12px 22px;border-radius:999px;font-size:13.5px;font-weight:700;z-index:90;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+
+  @media(max-width:860px){
+    .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);transition:transform .2s;z-index:40;}
+    .sidebar.open{transform:translateX(0);}
+    .main{padding:16px;}
+    .grid.list-mode .card{flex-direction:column;align-items:stretch;}
+    .grid.list-mode .card-body{flex-direction:column;align-items:flex-start;}
+    .grid.list-mode .card-title,.grid.list-mode .card-meta,.grid.list-mode .owner-line,.grid.list-mode .card-actions{width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="brand">
+      <span class="mark">LG</span>
+      <span class="name">Source Library<small>콘텐츠 자산관리</small></span>
+    </div>
+    <button class="register-btn" id="openRegisterBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+      자산 등록
+    </button>
+
+    <div class="nav-group" id="categoryNav"></div>
+    <div class="nav-group" id="siteNav"></div>
+    <div class="nav-group">
+      <div class="nav-label">보기</div>
+      <div class="nav-item" data-special="favorites">
+        <span class="left">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>
+          즐겨찾기
+        </span>
+        <span class="count" id="favCount"></span>
+      </div>
+      <div class="nav-item" data-special="requests">
+        <span class="left">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+          접근 권한 요청
+        </span>
+        <span class="count" id="reqCount"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="searchInput" placeholder="소스 검색... (제목, 태그, 제작자)">
+      </div>
+      <select class="sort-select" id="sortSelect">
+        <option value="new">최신순</option>
+        <option value="old">오래된순</option>
+        <option value="download">다운로드순</option>
+        <option value="name">이름순</option>
+      </select>
+      <div class="icon-toggle-group">
+        <button class="active" data-view="grid" title="그리드 보기">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </button>
+        <button data-view="list" title="리스트 보기">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="note-banner">
+      담당자가 전달한 파일은 관리자가 SharePoint에 업로드 후 여기에 등록합니다. LG전자 소속은 링크로 바로 열람·다운로드되며, LG CNS·LGU+·LG생활건강 등 타 계열사는 권한이 없어 링크가 열리지 않을 수 있어요 — 이 경우 카드의 "권한 요청"을 이용해주세요.
+    </div>
+
+    <div class="page-head">
+      <h1 id="pageTitle">전체 소스</h1>
+      <div class="count-line" id="pageCount"></div>
+    </div>
+
+    <div id="catalogView">
+      <div class="grid" id="assetGrid"></div>
+    </div>
+
+    <div id="requestsView" style="display:none;">
+      <div class="req-list" id="reqList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- register modal -->
+<div class="overlay" id="registerOverlay" style="display:none;">
+  <div class="modal">
+    <h2>자산 등록</h2>
+    <div class="sub">실제 파일이 아닌, 자산 정보와 SharePoint 링크를 등록합니다.</div>
+    <form id="registerForm">
+      <div class="field"><label>자산명</label><input required id="f_title" placeholder="예: 2026 여름 캠페인 티저 영상"></div>
+      <div class="field-row">
+        <div class="field"><label>카테고리</label>
+          <select id="f_type">
+            <option value="영상 콘텐츠">영상 콘텐츠</option>
+            <option value="디자인">디자인</option>
+            <option value="모션그래픽">모션그래픽</option>
+            <option value="템플릿">템플릿</option>
+          </select>
+        </div>
+        <div class="field" id="f_subtype_wrap" style="display:none;"><label>템플릿 종류</label>
+          <select id="f_subtype">
+            <option value="디자인 소스">디자인 소스</option>
+            <option value="BGM 소스">BGM 소스</option>
+            <option value="폰트">폰트</option>
+            <option value="모션 템플릿">모션 템플릿</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>사업장</label>
+          <select id="f_site"><option>평택</option><option>마곡</option><option>서울역</option><option>여의도</option><option>공용</option></select>
+        </div>
+        <div class="field" id="f_duration_wrap" style="display:none;"><label>재생시간 <span class="hint">(선택)</span></label><input id="f_duration" placeholder="예: 2:34"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>제작자</label><input required id="f_owner" placeholder="이름"></div>
+        <div class="field"><label>연락처 <span class="hint">(선택)</span></label><input id="f_contact" placeholder="내선 / 메일"></div>
+      </div>
+      <div class="field"><label>SharePoint 링크</label><input required id="f_location" type="url" placeholder="https://lg.sharepoint.com/..."></div>
+      <div class="field"><label>파일 정보 <span class="hint">(선택, 예: 3840×2160 · 1.2GB)</span></label><input id="f_fileinfo" placeholder="해상도 · 용량"></div>
+      <div class="field"><label>태그 <span class="hint">(쉼표로 구분)</span></label><input id="f_tags" placeholder="예: 캠페인, 세로영상"></div>
+      <div class="field"><label>비고</label><textarea id="f_note" placeholder="사용 시 참고사항"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="cancel-btn" id="cancelRegister">취소</button>
+        <button type="submit" class="submit-btn">등록하기</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- permission request modal -->
+<div class="overlay" id="requestOverlay" style="display:none;">
+  <div class="modal">
+    <h2>SharePoint 접근 권한 요청</h2>
+    <div class="sub" id="reqAssetTitle"></div>
+    <form id="requestForm">
+      <div class="field"><label>요청자</label><input required id="r_name" placeholder="이름"></div>
+      <div class="field"><label>소속 회사</label>
+        <select id="r_company"><option>LG전자</option><option>LG CNS</option><option>LGU+</option><option>LG생활건강</option><option>기타</option></select>
+      </div>
+      <div class="field"><label>요청 사유 / 용도</label><textarea id="r_reason" placeholder="예: 8월 온보딩 영상 배경음악으로 사용 예정"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="cancel-btn" id="cancelRequest">취소</button>
+        <button type="submit" class="submit-btn">권한 요청 보내기</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const SITES = ["전체","평택","마곡","서울역","여의도"];
+const CATEGORIES = [
+  {key:"영상 콘텐츠", icon:'<path d="M4 6h13v12H4z"/><path d="M17 10l4-2.5v9L17 14"/>'},
+  {key:"디자인", icon:'<circle cx="13.5" cy="6.5" r="2.5"/><path d="M8 12l7-7 3.5 3.5-7 7H8v-3.5z"/><path d="M3 21l3-1 8-8"/>'},
+  {key:"모션그래픽", icon:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17.5h7"/>'},
+];
+const TEMPLATE_KEY = "템플릿";
+const SUBTYPES = ["디자인 소스","BGM 소스","폰트","모션 템플릿"];
+const TYPE_ICON_ALL = '<path d="M4 4h16v16H4z" opacity="0"/><circle cx="12" cy="12" r="8"/>';
+
+const GRADIENTS = [
+  "linear-gradient(135deg,#3D0B18,#A50034)",
+  "linear-gradient(135deg,#A50034,#FF6A3D)",
+  "linear-gradient(135deg,#2B0713,#78002A)",
+  "linear-gradient(135deg,#5C0A24,#E4003A)",
+  "linear-gradient(135deg,#7A1030,#F2734A)",
+  "linear-gradient(135deg,#1A0308,#A50034,#FF9466)"
+];
+function gradFor(id){
+  let h=0; for(const c of id) h=(h*31+c.charCodeAt(0))>>>0;
+  return GRADIENTS[h % GRADIENTS.length];
+}
+function iconFor(type,subtype){
+  if(type==="영상 콘텐츠") return '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><polygon points="9,7 18,12 9,17" fill="rgba(255,255,255,.55)" stroke="none"/></svg>';
+  if(type==="디자인") return '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>';
+  if(type==="모션그래픽") return '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>';
+  if(subtype==="BGM 소스") return '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
+  if(subtype==="폰트") return '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><text x="4" y="18" font-size="16" fill="rgba(255,255,255,.6)" stroke="none">Aa</text></svg>';
+  if(subtype==="모션 템플릿") return '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><polygon points="9,7 18,12 9,17" fill="rgba(255,255,255,.5)" stroke="none"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>';
+  return '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg>';
+}
+
+let assets = [];
+let requests = [];
+let activeCategory = "전체";
+let activeSubtype = null;
+let activeSite = "전체";
+let activeSpecial = null; // 'favorites' | 'requests' | null
+let viewMode = "grid";
+let pendingRequestAsset = null;
+
+const $ = s=>document.querySelector(s);
+
+async function loadData(){
+  try{ const a = await window.storage.get('assets_v2', true); assets = a && a.value ? JSON.parse(a.value) : []; }
+  catch(e){ assets = []; }
+  try{ const r = await window.storage.get('requests_v2', true); requests = r && r.value ? JSON.parse(r.value) : []; }
+  catch(e){ requests = []; }
+  render();
+}
+async function saveAssets(){ try{ await window.storage.set('assets_v2', JSON.stringify(assets), true); }catch(e){ showToast('저장 실패, 다시 시도해주세요.'); } }
+async function saveRequests(){ try{ await window.storage.set('requests_v2', JSON.stringify(requests), true); }catch(e){ showToast('저장 실패, 다시 시도해주세요.'); } }
+
+function showToast(msg){
+  const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),2200);
+}
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+function countFor(type,subtype){
+  if(subtype) return assets.filter(a=>a.type===TEMPLATE_KEY && a.subtype===subtype).length;
+  if(type==="전체") return assets.length;
+  return assets.filter(a=>a.type===type).length;
+}
+
+function renderCategoryNav(){
+  const el = $('#categoryNav');
+  let html = `<div class="nav-label">카테고리</div>`;
+  html += navItemHtml("전체","전체 소스",'<circle cx="4" cy="4" r="0" opacity="0"/><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>', countFor("전체"));
+  CATEGORIES.forEach(c=>{
+    html += navItemHtml(c.key, c.key, c.icon, countFor(c.key));
+  });
+  // 템플릿 (expandable)
+  const tplActive = activeCategory===TEMPLATE_KEY;
+  html += `<div class="nav-item ${tplActive && !activeSpecial ?'active':''}" data-cat="${TEMPLATE_KEY}">
+      <span class="left"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg>${TEMPLATE_KEY}</span>
+      <span class="count">${countFor(TEMPLATE_KEY)}</span>
+    </div>`;
+  html += `<div class="sub-nav">`;
+  SUBTYPES.forEach(st=>{
+    const on = activeCategory===TEMPLATE_KEY && activeSubtype===st && !activeSpecial;
+    html += `<div class="nav-item ${on?'active':''}" data-cat="${TEMPLATE_KEY}" data-sub="${st}">
+        <span class="left">${st}</span><span class="count">${countFor(null,st)}</span>
+      </div>`;
+  });
+  html += `</div>`;
+  el.innerHTML = html;
+  el.querySelectorAll('[data-cat]').forEach(item=>{
+    item.onclick=()=>{
+      activeSpecial=null;
+      activeCategory=item.dataset.cat;
+      activeSubtype=item.dataset.sub || null;
+      render();
+    };
+  });
+}
+function navItemHtml(catKey,label,iconPath,count){
+  const on = activeCategory===catKey && !activeSpecial;
+  return `<div class="nav-item ${on?'active':''}" data-cat="${catKey}">
+      <span class="left"><svg viewBox="0 0 24 24" fill="none" stroke-width="2">${iconPath}</svg>${label}</span>
+      <span class="count">${count}</span>
+    </div>`;
+}
+
+function renderSiteNav(){
+  const el = $('#siteNav');
+  let html = `<div class="nav-label">사업장</div>`;
+  SITES.forEach(s=>{
+    const count = s==="전체" ? assets.length : assets.filter(a=>a.site===s).length;
+    const on = activeSite===s;
+    html += `<div class="nav-item ${on?'active':''}" data-site="${s}">
+        <span class="left"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>${s}</span>
+        <span class="count">${count}</span>
+      </div>`;
+  });
+  el.innerHTML = html;
+  el.querySelectorAll('[data-site]').forEach(item=>{
+    item.onclick=()=>{ activeSite=item.dataset.site; render(); };
+  });
+}
+
+function filteredAssets(){
+  const q = $('#searchInput').value.trim().toLowerCase();
+  let list = assets.filter(a=>{
+    if(activeSpecial==='favorites' && !a.favorite) return false;
+    if(!activeSpecial){
+      if(activeCategory!=="전체" && a.type!==activeCategory) return false;
+      if(activeCategory===TEMPLATE_KEY && activeSubtype && a.subtype!==activeSubtype) return false;
+    }
+    if(activeSite!=="전체" && a.site!==activeSite) return false;
+    if(q){
+      const hay=[a.title,a.owner,(a.tags||[]).join(' '),a.site].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  const sort = $('#sortSelect').value;
+  if(sort==='new') list.sort((x,y)=>(y.createdAt||'').localeCompare(x.createdAt||''));
+  if(sort==='old') list.sort((x,y)=>(x.createdAt||'').localeCompare(y.createdAt||''));
+  if(sort==='download') list.sort((x,y)=>(y.downloadCount||0)-(x.downloadCount||0));
+  if(sort==='name') list.sort((x,y)=>x.title.localeCompare(y.title));
+  return list;
+}
+
+function renderGrid(){
+  const list = filteredAssets();
+  const grid = $('#assetGrid');
+  grid.className = 'grid' + (viewMode==='list' ? ' list-mode' : '');
+  if(list.length===0){
+    grid.innerHTML = `<div class="empty"><b>등록된 소스가 없습니다</b>조건을 바꾸거나 새 자산을 등록해보세요.</div>`;
+    return;
+  }
+  grid.innerHTML = list.map(a=>`
+    <div class="card">
+      <div class="thumb" style="background:${gradFor(a.id)}">
+        <span class="badge">${iconFor(a.type,a.subtype)}${a.subtype ? a.subtype : a.type}</span>
+        <button class="fav-btn ${a.favorite?'active':''}" data-fav="${a.id}">
+          <svg viewBox="0 0 24 24" stroke-width="2"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>
+        </button>
+        ${iconFor(a.type,a.subtype)}
+        ${a.duration ? `<span class="dur-badge">${escapeHtml(a.duration)}</span>` : ''}
+      </div>
+      <div class="card-body">
+        <h3 class="card-title">${escapeHtml(a.title)}</h3>
+        <div class="owner-line">제작자 ${escapeHtml(a.owner)} · ${escapeHtml(a.site)}</div>
+        <div class="card-meta">
+          <span>${a.fileInfo ? escapeHtml(a.fileInfo) : a.createdAt}</span>
+          <span class="dl"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>${a.downloadCount||0}</span>
+        </div>
+        ${(a.tags&&a.tags.length) ? `<div class="tags">${a.tags.map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+        <div class="card-actions">
+          <button class="open-btn" data-open="${a.id}">SharePoint에서 열기 ↗</button>
+          <button class="perm-btn" data-req="${a.id}" title="권한이 없어 안 열리면 요청">권한요청</button>
+          <button class="del-btn" data-del="${a.id}" title="삭제">✕</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  grid.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openAsset(b.dataset.open));
+  grid.querySelectorAll('[data-fav]').forEach(b=>b.onclick=()=>toggleFav(b.dataset.fav));
+  grid.querySelectorAll('[data-req]').forEach(b=>b.onclick=()=>openRequestModal(b.dataset.req));
+  grid.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteAsset(b.dataset.del));
+}
+
+async function openAsset(id){
+  const a = assets.find(x=>x.id===id); if(!a) return;
+  a.downloadCount = (a.downloadCount||0)+1;
+  await saveAssets();
+  renderGrid();
+  window.open(a.location,'_blank','noopener');
+}
+async function toggleFav(id){
+  const a = assets.find(x=>x.id===id); if(!a) return;
+  a.favorite = !a.favorite;
+  await saveAssets();
+  render();
+}
+async function deleteAsset(id){
+  if(!confirm('이 자산을 목록에서 삭제할까요?')) return;
+  assets = assets.filter(a=>a.id!==id);
+  await saveAssets();
+  render();
+  showToast('삭제되었습니다.');
+}
+
+function renderRequests(){
+  const el = $('#reqList');
+  const list = [...requests].sort((x,y)=>(y.createdAt||'').localeCompare(x.createdAt||''));
+  if(list.length===0){
+    el.innerHTML = `<div class="empty"><b>접근 권한 요청 내역이 없습니다</b>SharePoint 링크가 안 열릴 때 카드의 "권한요청"을 눌러보세요.</div>`;
+    return;
+  }
+  el.innerHTML = list.map(r=>`
+    <div class="req-item">
+      <div>
+        <div class="a-title">${escapeHtml(r.assetTitle)}</div>
+        <div class="r-meta">요청자 ${escapeHtml(r.requester)} · ${escapeHtml(r.company||'LG전자')}${r.company && r.company!=='LG전자' ? ' <span style="color:var(--lg-red-bright);font-weight:700;">(권한 불가 · 직접 전달 필요)</span>' : ''} · ${r.createdAt}${r.reason ? ' · '+escapeHtml(r.reason) : ''}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="status-pill ${r.status==='완료'?'done':'wait'}">${r.status}</span>
+        ${r.status==='대기' ? `<button class="ghost-btn" data-done="${r.id}">완료 처리</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+  el.querySelectorAll('[data-done]').forEach(b=>b.onclick=()=>markDone(b.dataset.done));
+}
+async function markDone(id){
+  const r = requests.find(x=>x.id===id);
+  if(r){ r.status='완료'; await saveRequests(); render(); showToast('완료 처리했습니다.'); }
+}
+
+function currentPageTitle(){
+  if(activeSpecial==='favorites') return '즐겨찾기';
+  if(activeSpecial==='requests') return '접근 권한 요청';
+  if(activeCategory===TEMPLATE_KEY && activeSubtype) return `템플릿 · ${activeSubtype}`;
+  return activeCategory;
+}
+
+function render(){
+  renderCategoryNav();
+  renderSiteNav();
+  $('#favCount').textContent = assets.filter(a=>a.favorite).length;
+  $('#reqCount').textContent = requests.filter(r=>r.status==='대기').length;
+  document.querySelectorAll('[data-special]').forEach(el=>{
+    el.classList.toggle('active', activeSpecial===el.dataset.special);
+    el.onclick=()=>{ activeSpecial=el.dataset.special; render(); };
+  });
+
+  $('#pageTitle').textContent = currentPageTitle();
+
+  if(activeSpecial==='requests'){
+    $('#catalogView').style.display='none';
+    $('#requestsView').style.display='';
+    $('#pageCount').textContent = `${requests.length}건`;
+    renderRequests();
+  }else{
+    $('#catalogView').style.display='';
+    $('#requestsView').style.display='none';
+    const list = filteredAssets();
+    $('#pageCount').textContent = `${list.length}개 항목`;
+    renderGrid();
+  }
+}
+
+$('#searchInput').addEventListener('input', render);
+$('#sortSelect').addEventListener('change', render);
+document.querySelectorAll('.icon-toggle-group button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.icon-toggle-group button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    viewMode = b.dataset.view;
+    renderGrid();
+  };
+});
+
+// register modal
+$('#openRegisterBtn').onclick=()=>{ $('#registerOverlay').style.display='flex'; };
+$('#cancelRegister').onclick=()=>{ $('#registerOverlay').style.display='none'; $('#registerForm').reset(); toggleFormFields(); };
+$('#f_type').addEventListener('change', toggleFormFields);
+function toggleFormFields(){
+  const t = $('#f_type').value;
+  $('#f_subtype_wrap').style.display = t===TEMPLATE_KEY ? '' : 'none';
+  $('#f_duration_wrap').style.display = t==='영상 콘텐츠' ? '' : 'none';
+}
+toggleFormFields();
+
+$('#registerForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const type = $('#f_type').value;
+  const asset = {
+    id:'a_'+Date.now(),
+    title:$('#f_title').value.trim(),
+    type,
+    subtype: type===TEMPLATE_KEY ? $('#f_subtype').value : null,
+    site:$('#f_site').value,
+    owner:$('#f_owner').value.trim(),
+    contact:$('#f_contact').value.trim(),
+    location:$('#f_location').value.trim(),
+    fileInfo:$('#f_fileinfo').value.trim(),
+    duration: type==='영상 콘텐츠' ? $('#f_duration').value.trim() : '',
+    tags:$('#f_tags').value.split(',').map(t=>t.trim()).filter(Boolean),
+    note:$('#f_note').value.trim(),
+    favorite:false,
+    downloadCount:0,
+    createdAt:new Date().toISOString().slice(0,10)
+  };
+  assets.push(asset);
+  await saveAssets();
+  $('#registerOverlay').style.display='none';
+  $('#registerForm').reset();
+  toggleFormFields();
+  render();
+  showToast('자산이 등록되었습니다.');
+});
+
+// permission request modal
+function openRequestModal(assetId){
+  pendingRequestAsset = assets.find(a=>a.id===assetId);
+  if(!pendingRequestAsset) return;
+  $('#reqAssetTitle').textContent = `"${pendingRequestAsset.title}" · 제작자 ${pendingRequestAsset.owner}`;
+  $('#requestOverlay').style.display='flex';
+}
+$('#cancelRequest').onclick=()=>{ $('#requestOverlay').style.display='none'; $('#requestForm').reset(); };
+$('#requestForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const req = {
+    id:'r_'+Date.now(),
+    assetId:pendingRequestAsset.id,
+    assetTitle:pendingRequestAsset.title,
+    requester:$('#r_name').value.trim(),
+    company:$('#r_company').value,
+    reason:$('#r_reason').value.trim(),
+    status:'대기',
+    createdAt:new Date().toISOString().slice(0,10)
+  };
+  requests.push(req);
+  await saveRequests();
+  $('#requestOverlay').style.display='none';
+  $('#requestForm').reset();
+  render();
+  showToast('접근 권한 요청이 등록되었습니다.');
+});
+
+loadData();
+</script>
+</body>
+</html>
