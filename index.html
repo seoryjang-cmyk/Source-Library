@@ -353,6 +353,44 @@
 </div>
 
 <script>
+// ============================================================
+// Vercel 배포용 storage shim
+// 원래 Claude 아티팩트의 window.storage API를 그대로 흉내내되,
+// 내부적으로는 /api/storage 서버리스 함수(+ Vercel KV)를 호출합니다.
+// 이 블록 아래의 앱 코드는 원본과 100% 동일합니다.
+// ============================================================
+window.storage = {
+  async get(key, shared = false) {
+    const res = await fetch(`/api/storage?key=${encodeURIComponent(key)}&shared=${shared}`);
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('storage get failed: ' + res.status);
+    return res.json();
+  },
+  async set(key, value, shared = false) {
+    const res = await fetch('/api/storage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, value, shared })
+    });
+    if (!res.ok) throw new Error('storage set failed: ' + res.status);
+    return res.json();
+  },
+  async delete(key, shared = false) {
+    const res = await fetch('/api/storage', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, shared })
+    });
+    if (!res.ok) throw new Error('storage delete failed: ' + res.status);
+    return res.json();
+  },
+  async list(prefix = '', shared = false) {
+    const res = await fetch(`/api/storage?prefix=${encodeURIComponent(prefix)}&shared=${shared}`);
+    if (!res.ok) throw new Error('storage list failed: ' + res.status);
+    return res.json();
+  }
+};
+
 const SITES = ["전체","평택","마곡","서울역","여의도"];
 const CATEGORIES = [
   {key:"영상 콘텐츠", icon:'<path d="M4 6h13v12H4z"/><path d="M17 10l4-2.5v9L17 14"/>'},
