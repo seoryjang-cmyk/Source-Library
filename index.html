@@ -452,7 +452,7 @@ function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;'
 
 function countFor(type,subtype){
   if(subtype) return assets.filter(a=>a.type===TEMPLATE_KEY && a.subtype===subtype).length;
-  if(type==="전체") return assets.length;
+  if(type==="전체") return assets.filter(a=>a.type==="영상 콘텐츠").length; // '전체' 탭은 영상만 보여주므로 카운트도 맞춤
   return assets.filter(a=>a.type===type).length;
 }
 
@@ -517,7 +517,12 @@ function filteredAssets(){
   let list = assets.filter(a=>{
     if(activeSpecial==='favorites' && !a.favorite) return false;
     if(!activeSpecial){
-      if(activeCategory!=="전체" && a.type!==activeCategory) return false;
+      if(activeCategory==="전체"){
+        // '전체' 탭은 전체 자산이 아니라 영상 콘텐츠만 보여줍니다.
+        if(a.type!=="영상 콘텐츠") return false;
+      } else if(a.type!==activeCategory){
+        return false;
+      }
       if(activeCategory===TEMPLATE_KEY && activeSubtype && a.subtype!==activeSubtype) return false;
     }
     if(activeSite!=="전체" && a.site!==activeSite) return false;
