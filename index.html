@@ -111,9 +111,10 @@
   .card{background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;}
   .card:hover{border-color:var(--border);}
   .thumb{
-    position:relative;height:148px;display:flex;align-items:center;justify-content:center;
+    position:relative;height:148px;display:flex;align-items:center;justify-content:center;overflow:hidden;
   }
   .thumb svg{width:34px;height:34px;stroke:rgba(255,255,255,.55);opacity:.9;}
+  .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
   .badge{
     position:absolute;top:10px;left:10px;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);
     color:#fff;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:6px;display:flex;align-items:center;gap:5px;
@@ -138,10 +139,12 @@
   .tags{display:flex;gap:5px;flex-wrap:wrap;}
   .tag{font-size:10.5px;color:var(--sub);background:#111113;border:1px solid var(--border-soft);padding:2.5px 7px;border-radius:5px;}
   .owner-line{font-size:11.5px;color:var(--sub);}
-  .card-actions{display:flex;gap:6px;margin-top:2px;}
+  .card-actions{display:flex;gap:6px;margin-top:2px;flex-wrap:wrap;}
   .card-actions button{border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;padding:8px 0;border:none;}
-  .open-btn{flex:1;background:var(--lg-red);color:#fff;}
+  .open-btn{flex:1 1 96px;background:var(--lg-red);color:#fff;}
   .open-btn:hover{background:var(--lg-red-bright);}
+  .dl-btn{flex:0 0 32px;background:transparent;border:1px solid var(--border);color:var(--sub);font-size:13px;}
+  .dl-btn:hover{color:#fff;border-color:var(--faint);}
   .perm-btn{flex:0 0 auto;padding:8px 10px;background:transparent;border:1px solid var(--border);color:var(--sub);}
   .perm-btn:hover{color:#fff;border-color:var(--faint);}
   .del-btn{flex:0 0 32px;background:transparent;border:1px solid var(--border);color:var(--faint);}
@@ -155,7 +158,7 @@
   .grid.list-mode .tags{display:none;}
   .grid.list-mode .card-meta{flex:0 0 auto;width:180px;}
   .grid.list-mode .owner-line{flex:0 0 auto;width:140px;}
-  .grid.list-mode .card-actions{margin-left:auto;width:220px;}
+  .grid.list-mode .card-actions{margin-left:auto;width:270px;}
   .grid.list-mode .dur-badge{display:none;}
 
   .empty{
@@ -183,6 +186,7 @@
   .field{margin-bottom:13px;}
   .field label{display:block;font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px;}
   .field .hint{font-weight:400;color:var(--faint);margin-left:3px;}
+  .field label .req{color:var(--lg-red-bright);margin-left:2px;}
   .field input,.field select,.field textarea{
     width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);
     background:#101012;color:var(--text);font-size:13.5px;font-family:inherit;
@@ -268,7 +272,7 @@
     </div>
 
     <div class="note-banner">
-      담당자가 전달한 파일은 관리자가 SharePoint에 업로드 후 여기에 등록합니다. 
+      실제 영상·이미지 파일은 이 사이트에 업로드되지 않습니다. 각 담당자가 본인의 SharePoint(OneDrive) 공유 링크를 직접 등록하면, 사이트에는 자산 정보와 링크만 저장됩니다. 열람·다운로드 가능 여부는 각자의 SharePoint 접근 권한에 따라 결정됩니다.
     </div>
 
     <div class="page-head">
@@ -292,10 +296,10 @@
     <h2>자산 등록</h2>
     <div class="sub">실제 파일이 아닌, 자산 정보와 SharePoint 링크를 등록합니다.</div>
     <form id="registerForm">
-      <div class="field"><label>자산명</label><input required id="f_title" placeholder="예: 2026 여름 캠페인 티저 영상"></div>
+      <div class="field"><label>자산명<span class="req">*</span></label><input required id="f_title" placeholder="예: 2026 여름 캠페인 티저 영상"></div>
       <div class="field-row">
-        <div class="field"><label>카테고리</label>
-          <select id="f_type">
+        <div class="field"><label>카테고리<span class="req">*</span></label>
+          <select id="f_type" required>
             <option value="영상 콘텐츠">영상 콘텐츠</option>
             <option value="디자인">디자인</option>
             <option value="모션그래픽">모션그래픽</option>
@@ -312,19 +316,20 @@
         </div>
       </div>
       <div class="field-row">
-        <div class="field"><label>사업장</label>
-          <select id="f_site"><option>평택</option><option>마곡</option><option>서울역</option><option>여의도</option><option>공용</option></select>
+        <div class="field"><label>사업장<span class="req">*</span></label>
+          <select id="f_site" required><option>평택</option><option>마곡</option><option>서울역</option><option>여의도</option><option>공용</option></select>
         </div>
         <div class="field" id="f_duration_wrap" style="display:none;"><label>재생시간 <span class="hint">(선택)</span></label><input id="f_duration" placeholder="예: 2:34"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>제작자</label><input required id="f_owner" placeholder="이름"></div>
+        <div class="field"><label>제작자<span class="req">*</span></label><input required id="f_owner" placeholder="이름"></div>
         <div class="field"><label>연락처 <span class="hint">(선택)</span></label><input id="f_contact" placeholder="내선 / 메일"></div>
       </div>
-      <div class="field"><label>SharePoint 링크</label><input required id="f_location" type="url" placeholder="https://lg.sharepoint.com/..."></div>
+      <div class="field"><label>SharePoint 링크<span class="req">*</span></label><input required id="f_location" type="url" placeholder="https://lg.sharepoint.com/..."></div>
+      <div class="field"><label>썸네일 이미지 URL <span class="hint">(선택 · 로그인 없이 누구나 볼 수 있는 이미지 주소만 정상 표시됩니다)</span></label><input id="f_thumb" type="url" placeholder="https://..."></div>
       <div class="field"><label>파일 정보 <span class="hint">(선택, 예: 3840×2160 · 1.2GB)</span></label><input id="f_fileinfo" placeholder="해상도 · 용량"></div>
-      <div class="field"><label>태그 <span class="hint">(쉼표로 구분)</span></label><input id="f_tags" placeholder="예: 캠페인, 세로영상"></div>
-      <div class="field"><label>비고</label><textarea id="f_note" placeholder="사용 시 참고사항"></textarea></div>
+      <div class="field"><label>태그 <span class="hint">(선택 · 쉼표로 구분)</span></label><input id="f_tags" placeholder="예: 캠페인, 세로영상"></div>
+      <div class="field"><label>비고 <span class="hint">(선택)</span></label><textarea id="f_note" placeholder="사용 시 참고사항"></textarea></div>
       <div class="modal-actions">
         <button type="button" class="cancel-btn" id="cancelRegister">취소</button>
         <button type="submit" class="submit-btn">등록하기</button>
@@ -356,7 +361,7 @@
 // ============================================================
 // Vercel 배포용 storage shim
 // 원래 Claude 아티팩트의 window.storage API를 그대로 흉내내되,
-// 내부적으로는 /api/storage 서버리스 함수(+ Vercel KV)를 호출합니다.
+// 내부적으로는 /api/storage 서버리스 함수(+ Upstash Redis) 를 호출합니다.
 // 이 블록 아래의 앱 코드는 원본과 100% 동일합니다.
 // ============================================================
 window.storage = {
@@ -551,11 +556,12 @@ function renderGrid(){
   grid.innerHTML = list.map(a=>`
     <div class="card">
       <div class="thumb" style="background:${gradFor(a.id)}">
+        ${a.thumbnail ? `<img src="${escapeHtml(a.thumbnail)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
         <span class="badge">${iconFor(a.type,a.subtype)}${a.subtype ? a.subtype : a.type}</span>
         <button class="fav-btn ${a.favorite?'active':''}" data-fav="${a.id}">
           <svg viewBox="0 0 24 24" stroke-width="2"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>
         </button>
-        ${iconFor(a.type,a.subtype)}
+        ${!a.thumbnail ? iconFor(a.type,a.subtype) : ''}
         ${a.duration ? `<span class="dur-badge">${escapeHtml(a.duration)}</span>` : ''}
       </div>
       <div class="card-body">
@@ -568,6 +574,7 @@ function renderGrid(){
         ${(a.tags&&a.tags.length) ? `<div class="tags">${a.tags.map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}</div>` : ''}
         <div class="card-actions">
           <button class="open-btn" data-open="${a.id}">SharePoint에서 열기 ↗</button>
+          <button class="dl-btn" data-dl="${a.id}" title="다운로드 링크로 열기 (SharePoint 접근 권한 필요)">⬇</button>
           <button class="perm-btn" data-req="${a.id}" title="권한이 없어 안 열리면 요청">권한요청</button>
           <button class="del-btn" data-del="${a.id}" title="삭제">✕</button>
         </div>
@@ -575,6 +582,7 @@ function renderGrid(){
     </div>
   `).join('');
   grid.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openAsset(b.dataset.open));
+  grid.querySelectorAll('[data-dl]').forEach(b=>b.onclick=()=>downloadAsset(b.dataset.dl));
   grid.querySelectorAll('[data-fav]').forEach(b=>b.onclick=()=>toggleFav(b.dataset.fav));
   grid.querySelectorAll('[data-req]').forEach(b=>b.onclick=()=>openRequestModal(b.dataset.req));
   grid.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteAsset(b.dataset.del));
@@ -587,6 +595,26 @@ async function openAsset(id){
   renderGrid();
   window.open(a.location,'_blank','noopener');
 }
+
+// SharePoint/OneDrive 공유 링크를 "다운로드" 형태로 바꿔서 열어줍니다.
+// (링크 종류·권한에 따라 항상 100% 동작하지는 않으며, 안 열리면 "SharePoint에서 열기"를 이용해주세요.)
+function toDirectDownloadUrl(rawUrl){
+  try{
+    const u = new URL(rawUrl);
+    if(!u.searchParams.has('download')) u.searchParams.set('download','1');
+    return u.toString();
+  }catch(e){
+    return rawUrl + (rawUrl.includes('?') ? '&' : '?') + 'download=1';
+  }
+}
+async function downloadAsset(id){
+  const a = assets.find(x=>x.id===id); if(!a) return;
+  a.downloadCount = (a.downloadCount||0)+1;
+  await saveAssets();
+  renderGrid();
+  window.open(toDirectDownloadUrl(a.location), '_blank', 'noopener');
+}
+
 async function toggleFav(id){
   const a = assets.find(x=>x.id===id); if(!a) return;
   a.favorite = !a.favorite;
@@ -694,6 +722,7 @@ $('#registerForm').addEventListener('submit', async (e)=>{
     owner:$('#f_owner').value.trim(),
     contact:$('#f_contact').value.trim(),
     location:$('#f_location').value.trim(),
+    thumbnail:$('#f_thumb').value.trim(),
     fileInfo:$('#f_fileinfo').value.trim(),
     duration: type==='영상 콘텐츠' ? $('#f_duration').value.trim() : '',
     tags:$('#f_tags').value.split(',').map(t=>t.trim()).filter(Boolean),
