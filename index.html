@@ -73,6 +73,21 @@
   .sub-nav{display:flex;flex-direction:column;gap:1px;margin:2px 0 4px 14px;border-left:1px solid var(--border-soft);padding-left:10px;}
   .sub-nav .nav-item{padding:7px 10px;font-size:13px;font-weight:500;}
 
+  .user-card{
+    margin-top:auto;padding:12px 12px;border-radius:10px;background:var(--surface);border:1px solid var(--border-soft);
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .user-card .who{display:flex;align-items:center;gap:9px;}
+  .user-card .avatar{
+    width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--lg-red-bright),var(--lg-red));
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;color:#fff;flex:0 0 auto;
+  }
+  .user-card .info{min-width:0;}
+  .user-card .info .n{font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .user-card .info .o{font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .logout-btn{background:transparent;border:1px solid var(--border);color:var(--sub);border-radius:7px;padding:7px 0;font-size:12px;font-weight:600;cursor:pointer;}
+  .logout-btn:hover{color:#fff;border-color:var(--faint);}
+
   /* ---------- MAIN ---------- */
   .main{flex:1;min-width:0;padding:20px 28px 60px;}
   .topbar{display:flex;gap:10px;align-items:center;margin-bottom:22px;flex-wrap:wrap;}
@@ -194,6 +209,7 @@
     background:#101012;color:var(--text);font-size:13.5px;font-family:inherit;
   }
   .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--lg-red-bright);}
+  .field input[readonly]{color:var(--sub);background:#0c0c0e;}
   .field textarea{resize:vertical;min-height:56px;}
   .field-row{display:flex;gap:10px;}
   .field-row .field{flex:1;}
@@ -210,6 +226,14 @@
   .detail-row .val{font-size:13.5px;color:var(--text);line-height:1.65;white-space:pre-wrap;}
   .detail-row .val.sub-val{color:var(--sub);}
 
+  /* ---------- LOGIN ---------- */
+  #loginOverlay{background:var(--bg);z-index:100;}
+  .login-box{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 28px;}
+  .login-box .brand{padding:0 0 22px;justify-content:center;}
+  .login-box .brand .name{text-align:left;}
+  .login-box h2{text-align:center;font-size:17px;margin:0 0 4px;}
+  .login-box .sub{text-align:center;margin-bottom:22px;}
+
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#fff;color:#111;
     padding:12px 22px;border-radius:999px;font-size:13.5px;font-weight:700;z-index:90;box-shadow:0 8px 24px rgba(0,0,0,.4);}
 
@@ -224,6 +248,25 @@
 </style>
 </head>
 <body>
+
+<!-- LOGIN -->
+<div class="overlay" id="loginOverlay" style="display:flex;">
+  <div class="login-box">
+    <div class="brand">
+      <span class="mark">LG</span>
+      <span class="name">Source Library<small>콘텐츠 자산관리</small></span>
+    </div>
+    <h2>로그인</h2>
+    <div class="sub">사번과 비밀번호를 입력해주세요.</div>
+    <form id="loginForm">
+      <div class="field"><label>사번<span class="req">*</span></label><input required id="l_empid" placeholder="예: 87160084" autocomplete="off"></div>
+      <div class="field"><label>비밀번호<span class="req">*</span></label><input required id="l_pw" type="password" placeholder="비밀번호" autocomplete="off"></div>
+      <div class="modal-actions">
+        <button type="submit" class="submit-btn">로그인</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <div class="shell">
   <!-- SIDEBAR -->
@@ -259,10 +302,20 @@
         <span class="left">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
           접근 권한 요청
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" style="width:12px;height:12px;opacity:.6;"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
         </span>
         <span class="count" id="reqCount"></span>
       </div>
+    </div>
+
+    <div class="user-card" id="userCard">
+      <div class="who">
+        <div class="avatar" id="userAvatar">-</div>
+        <div class="info">
+          <div class="n" id="userName">-</div>
+          <div class="o" id="userOrg">-</div>
+        </div>
+      </div>
+      <button class="logout-btn" id="logoutBtn">로그아웃</button>
     </div>
   </div>
 
@@ -340,7 +393,7 @@
         <div class="field" id="f_duration_wrap" style="display:none;"><label>재생시간 <span class="hint">(선택)</span></label><input id="f_duration" placeholder="예: 2:34"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>제작자<span class="req">*</span></label><input required id="f_owner" placeholder="이름"></div>
+        <div class="field"><label>제작자 <span class="hint">(로그인 계정)</span></label><input id="f_owner" readonly></div>
         <div class="field"><label>연락처 <span class="hint">(선택)</span></label><input id="f_contact" placeholder="내선 / 메일"></div>
       </div>
       <div class="field"><label>SharePoint 링크<span class="req">*</span></label><input required id="f_location" type="url" placeholder="https://lg.sharepoint.com/..."></div>
@@ -428,11 +481,28 @@ const CATEGORIES = [
 ];
 const TEMPLATE_KEY = "템플릿";
 const SUBTYPES = ["디자인 소스","BGM 소스","폰트","모션 템플릿"];
-const TYPE_ICON_ALL = '<path d="M4 4h16v16H4z" opacity="0"/><circle cx="12" cy="12" r="8"/>';
 
 // 관리자 전용 PIN (접근 권한 요청 화면 진입용)
 const ADMIN_PIN = "0000";
 let adminUnlocked = false;
+
+// 로그인 계정 목록 (사번 기준). 비밀번호는 전원 공통 1234.
+const LOGIN_PASSWORD = "1234";
+const EMPLOYEES = [
+  {org:"교육운영파트", name:"박진태", empId:"87160084"},
+  {org:"교육운영파트", name:"박윤정", empId:"87101142"},
+  {org:"교육운영파트", name:"안형래", empId:"87101151"},
+  {org:"교육운영파트", name:"김의현", empId:"87200085"},
+  {org:"교육운영파트", name:"박수지", empId:"87101175"},
+  {org:"교육운영파트", name:"박영진", empId:"87101132"},
+  {org:"교육운영파트", name:"신유철", empId:"87160011"},
+  {org:"교육운영파트", name:"유다근", empId:"87160020"},
+  {org:"교육운영파트", name:"유빛나라", empId:"87160092"},
+  {org:"교육운영파트", name:"이가은", empId:"87200013"},
+  {org:"교육운영파트", name:"이민웅", empId:"87101215"},
+  {org:"교육운영파트", name:"장서련", empId:"87160182"},
+];
+let currentUser = null; // {org, name, empId}
 
 const GRADIENTS = [
   "linear-gradient(135deg,#3D0B18,#A50034)",
@@ -468,6 +538,44 @@ let editingAssetId = null;
 
 const $ = s=>document.querySelector(s);
 
+// ---------- 로그인 ----------
+function loadSession(){
+  try{
+    const saved = JSON.parse(localStorage.getItem('current_user')||'null');
+    if(saved && saved.empId){
+      const emp = EMPLOYEES.find(e=>e.empId===saved.empId);
+      if(emp) currentUser = emp;
+    }
+  }catch(e){}
+}
+function renderUserCard(){
+  if(!currentUser) return;
+  $('#userAvatar').textContent = currentUser.name.slice(-2);
+  $('#userName').textContent = currentUser.name;
+  $('#userOrg').textContent = currentUser.org;
+}
+$('#loginForm').addEventListener('submit',(e)=>{
+  e.preventDefault();
+  const empId = $('#l_empid').value.trim();
+  const pw = $('#l_pw').value;
+  const emp = EMPLOYEES.find(x=>x.empId===empId);
+  if(!emp){ showToast('등록되지 않은 사번입니다.'); return; }
+  if(pw !== LOGIN_PASSWORD){ showToast('비밀번호가 올바르지 않습니다.'); return; }
+  currentUser = emp;
+  try{ localStorage.setItem('current_user', JSON.stringify({empId:emp.empId})); }catch(err){}
+  $('#loginForm').reset();
+  $('#loginOverlay').style.display='none';
+  renderUserCard();
+  loadData();
+});
+$('#logoutBtn').onclick=()=>{
+  currentUser = null;
+  try{ localStorage.removeItem('current_user'); }catch(e){}
+  activeSpecial = null;
+  adminUnlocked = false;
+  $('#loginOverlay').style.display='flex';
+};
+
 async function loadData(){
   try{ const a = await window.storage.get('assets_v2', true); assets = a && a.value ? JSON.parse(a.value) : []; }
   catch(e){ assets = []; }
@@ -484,21 +592,11 @@ function showToast(msg){
 }
 function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-// 이 브라우저에서 등록한 자산을 추적합니다. (로그인 기능이 없으므로
-// "등록할 때 쓴 이 브라우저"를 기준으로 본인 여부를 판단합니다.
-// 다른 컴퓨터/브라우저에서는 본인이 등록한 자산이어도 수정 버튼이 보이지 않습니다.)
-function getMyTokens(){
-  try{ return JSON.parse(localStorage.getItem('my_asset_tokens')||'{}'); }catch(e){ return {}; }
-}
-function rememberMyAsset(assetId, token){
-  const map = getMyTokens();
-  map[assetId] = token;
-  try{ localStorage.setItem('my_asset_tokens', JSON.stringify(map)); }catch(e){}
-}
+// 자산의 실제 등록자는 이제 사번(ownerEmpId) 기준으로 판단합니다.
+// 어느 기기/브라우저에서 로그인하든 본인 사번이면 동일하게 "내 등록"으로 인식됩니다.
 function isMine(asset){
-  if(!asset) return false;
-  const map = getMyTokens();
-  return !!(map[asset.id] && asset.editToken && map[asset.id]===asset.editToken);
+  if(!asset || !currentUser) return false;
+  return asset.ownerEmpId === currentUser.empId;
 }
 
 function countFor(type,subtype){
@@ -514,7 +612,6 @@ function renderCategoryNav(){
   CATEGORIES.forEach(c=>{
     html += navItemHtml(c.key, c.key, c.icon, countFor(c.key));
   });
-  // 템플릿 (expandable)
   const tplActive = activeCategory===TEMPLATE_KEY;
   html += `<div class="nav-item ${tplActive && !activeSpecial ?'active':''}" data-cat="${TEMPLATE_KEY}">
       <span class="left"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg>${TEMPLATE_KEY}</span>
@@ -652,8 +749,6 @@ async function openAsset(id){
   window.open(a.location,'_blank','noopener');
 }
 
-// SharePoint/OneDrive 공유 링크를 "다운로드" 형태로 바꿔서 열어줍니다.
-// (링크 종류·권한에 따라 항상 100% 동작하지는 않으며, 안 열리면 "SharePoint에서 열기"를 이용해주세요.)
 function toDirectDownloadUrl(rawUrl){
   try{
     const u = new URL(rawUrl);
@@ -752,6 +847,7 @@ function currentPageTitle(){
 }
 
 function render(){
+  renderUserCard();
   renderCategoryNav();
   renderSiteNav();
   $('#favCount').textContent = assets.filter(a=>a.favorite).length;
@@ -763,7 +859,7 @@ function render(){
       const special = el.dataset.special;
       if(special==='requests' && !adminUnlocked){
         const pin = prompt('관리자 PIN을 입력하세요.');
-        if(pin===null) return; // 취소
+        if(pin===null) return;
         if(pin !== ADMIN_PIN){
           showToast('PIN이 올바르지 않습니다.');
           return;
@@ -820,7 +916,7 @@ function openRegisterModal(assetToEdit){
     $('#f_subtype').value = assetToEdit.subtype || '디자인 소스';
     $('#f_site').value = assetToEdit.site || '평택';
     $('#f_duration').value = assetToEdit.duration || '';
-    $('#f_owner').value = assetToEdit.owner || '';
+    $('#f_owner').value = assetToEdit.owner || (currentUser ? currentUser.name : '');
     $('#f_contact').value = assetToEdit.contact || '';
     $('#f_location').value = assetToEdit.location || '';
     $('#f_thumb').value = assetToEdit.thumbnail || '';
@@ -832,6 +928,7 @@ function openRegisterModal(assetToEdit){
     $('#registerModalTitle').textContent = '자산 등록';
     $('#registerModalSub').textContent = '실제 파일이 아닌, 자산 정보와 SharePoint 링크를 등록합니다.';
     $('#registerSubmitBtn').textContent = '등록하기';
+    $('#f_owner').value = currentUser ? currentUser.name : '';
   }
   toggleFormFields();
   $('#registerOverlay').style.display='flex';
@@ -853,13 +950,16 @@ toggleFormFields();
 
 $('#registerForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
+  if(!currentUser){ showToast('로그인이 필요합니다.'); return; }
   const type = $('#f_type').value;
   const fields = {
     title:$('#f_title').value.trim(),
     type,
     subtype: type===TEMPLATE_KEY ? $('#f_subtype').value : null,
     site:$('#f_site').value,
-    owner:$('#f_owner').value.trim(),
+    owner: currentUser.name,
+    ownerEmpId: currentUser.empId,
+    ownerOrg: currentUser.org,
     contact:$('#f_contact').value.trim(),
     location:$('#f_location').value.trim(),
     thumbnail:$('#f_thumb').value.trim(),
@@ -878,17 +978,14 @@ $('#registerForm').addEventListener('submit', async (e)=>{
     await saveAssets();
     showToast('자산 정보가 수정되었습니다.');
   }else{
-    const editToken = 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
     const asset = {
       id:'a_'+Date.now(),
       ...fields,
-      editToken,
       favorite:false,
       downloadCount:0,
       createdAt:new Date().toISOString().slice(0,10)
     };
     assets.push(asset);
-    rememberMyAsset(asset.id, editToken);
     await saveAssets();
     showToast('자산이 등록되었습니다.');
   }
@@ -928,7 +1025,13 @@ $('#requestForm').addEventListener('submit', async (e)=>{
   showToast('접근 권한 요청이 등록되었습니다.');
 });
 
-loadData();
+// ---------- 초기 진입 ----------
+loadSession();
+if(currentUser){
+  $('#loginOverlay').style.display='none';
+  renderUserCard();
+  loadData();
+}
 </script>
 </body>
 </html>
