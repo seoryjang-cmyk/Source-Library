@@ -598,7 +598,7 @@ function renderGrid(){
         </div>
         ${(a.tags&&a.tags.length) ? `<div class="tags">${a.tags.map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}</div>` : ''}
         <div class="card-actions">
-          <button class="open-btn" data-open="${a.id}">SharePoint에서 열기 ↗</button>
+          <button class="open-btn" data-open="${a.id}">SharePoint에서 열기</button>
           <button class="dl-btn" data-dl="${a.id}" title="다운로드 링크로 열기 (SharePoint 접근 권한 필요)">⬇</button>
           ${isMine(a) ? `<button class="edit-btn" data-edit="${a.id}" title="내가 등록한 자산 수정">수정</button>` : ''}
           <button class="perm-btn" data-req="${a.id}" title="권한이 없어 안 열리면 요청">권한요청</button>
