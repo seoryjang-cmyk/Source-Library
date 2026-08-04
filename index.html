@@ -108,7 +108,7 @@
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:16px;}
   .grid.list-mode{grid-template-columns:1fr;gap:8px;}
 
-  .card{background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;}
+  .card{background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;cursor:pointer;}
   .card:hover{border-color:var(--border);}
   .thumb{
     position:relative;height:148px;display:flex;align-items:center;justify-content:center;overflow:hidden;
@@ -202,6 +202,14 @@
   .cancel-btn{background:transparent;border:1px solid var(--border) !important;color:var(--sub);}
   .submit-btn{background:linear-gradient(135deg,var(--lg-red-bright),var(--lg-red));color:#fff;}
 
+  /* ---------- DETAIL MODAL ---------- */
+  .detail-thumb{width:100%;height:200px;border-radius:10px;object-fit:cover;margin-bottom:16px;display:block;}
+  .detail-badge-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+  .detail-row{margin-bottom:14px;}
+  .detail-row label{display:block;font-size:11.5px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;}
+  .detail-row .val{font-size:13.5px;color:var(--text);line-height:1.65;white-space:pre-wrap;}
+  .detail-row .val.sub-val{color:var(--sub);}
+
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#fff;color:#111;
     padding:12px 22px;border-radius:999px;font-size:13.5px;font-weight:700;z-index:90;box-shadow:0 8px 24px rgba(0,0,0,.4);}
 
@@ -251,6 +259,7 @@
         <span class="left">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
           접근 권한 요청
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" style="width:12px;height:12px;opacity:.6;"><rect x="5" y="11" width="14" height="9" rx="1.5"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
         </span>
         <span class="count" id="reqCount"></span>
       </div>
@@ -337,6 +346,7 @@
       <div class="field"><label>SharePoint 링크<span class="req">*</span></label><input required id="f_location" type="url" placeholder="https://lg.sharepoint.com/..."></div>
       <div class="field"><label>썸네일 이미지 URL <span class="hint">(선택 · 로그인 없이 누구나 볼 수 있는 이미지 주소만 정상 표시됩니다)</span></label><input id="f_thumb" type="url" placeholder="https://..."></div>
       <div class="field"><label>파일 정보 <span class="hint">(선택, 예: 3840×2160 · 1.2GB)</span></label><input id="f_fileinfo" placeholder="해상도 · 용량"></div>
+      <div class="field"><label>내용 설명 <span class="hint">(선택 · 어떤 내용/작품인지 자세히)</span></label><textarea id="f_desc" placeholder="예: 여름 신제품 런칭을 주제로 한 15초 세로형 티저 영상. 로비 사이니지용."></textarea></div>
       <div class="field"><label>태그 <span class="hint">(선택 · 쉼표로 구분)</span></label><input id="f_tags" placeholder="예: 캠페인, 세로영상"></div>
       <div class="field"><label>비고 <span class="hint">(선택)</span></label><textarea id="f_note" placeholder="사용 시 참고사항"></textarea></div>
       <div class="modal-actions">
@@ -364,6 +374,11 @@
       </div>
     </form>
   </div>
+</div>
+
+<!-- detail modal -->
+<div class="overlay" id="detailOverlay" style="display:none;">
+  <div class="modal" id="detailModalBody"></div>
 </div>
 
 <script>
@@ -414,6 +429,10 @@ const CATEGORIES = [
 const TEMPLATE_KEY = "템플릿";
 const SUBTYPES = ["디자인 소스","BGM 소스","폰트","모션 템플릿"];
 const TYPE_ICON_ALL = '<path d="M4 4h16v16H4z" opacity="0"/><circle cx="12" cy="12" r="8"/>';
+
+// 관리자 전용 PIN (접근 권한 요청 화면 진입용)
+const ADMIN_PIN = "0000";
+let adminUnlocked = false;
 
 const GRADIENTS = [
   "linear-gradient(135deg,#3D0B18,#A50034)",
@@ -557,7 +576,7 @@ function filteredAssets(){
     }
     if(activeSite!=="전체" && a.site!==activeSite) return false;
     if(q){
-      const hay=[a.title,a.owner,(a.tags||[]).join(' '),a.site].join(' ').toLowerCase();
+      const hay=[a.title,a.owner,(a.tags||[]).join(' '),a.site,a.description].join(' ').toLowerCase();
       if(!hay.includes(q)) return false;
     }
     return true;
@@ -579,7 +598,7 @@ function renderGrid(){
     return;
   }
   grid.innerHTML = list.map(a=>`
-    <div class="card">
+    <div class="card" data-id="${a.id}">
       <div class="thumb" style="background:${gradFor(a.id)}">
         ${a.thumbnail ? `<img src="${escapeHtml(a.thumbnail)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
         <span class="badge">${iconFor(a.type,a.subtype)}${a.subtype ? a.subtype : a.type}</span>
@@ -607,15 +626,22 @@ function renderGrid(){
       </div>
     </div>
   `).join('');
-  grid.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openAsset(b.dataset.open));
-  grid.querySelectorAll('[data-dl]').forEach(b=>b.onclick=()=>downloadAsset(b.dataset.dl));
-  grid.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{
+  grid.querySelectorAll('[data-open]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openAsset(b.dataset.open); });
+  grid.querySelectorAll('[data-dl]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); downloadAsset(b.dataset.dl); });
+  grid.querySelectorAll('[data-edit]').forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
     const a = assets.find(x=>x.id===b.dataset.edit);
     if(a) openRegisterModal(a);
   });
-  grid.querySelectorAll('[data-fav]').forEach(b=>b.onclick=()=>toggleFav(b.dataset.fav));
-  grid.querySelectorAll('[data-req]').forEach(b=>b.onclick=()=>openRequestModal(b.dataset.req));
-  grid.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteAsset(b.dataset.del));
+  grid.querySelectorAll('[data-fav]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); toggleFav(b.dataset.fav); });
+  grid.querySelectorAll('[data-req]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openRequestModal(b.dataset.req); });
+  grid.querySelectorAll('[data-del]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); deleteAsset(b.dataset.del); });
+  grid.querySelectorAll('.card').forEach(cardEl=>{
+    cardEl.addEventListener('click', (e)=>{
+      if(e.target.closest('.card-actions') || e.target.closest('.fav-btn')) return;
+      openDetailModal(cardEl.dataset.id);
+    });
+  });
 }
 
 async function openAsset(id){
@@ -659,6 +685,38 @@ async function deleteAsset(id){
   showToast('삭제되었습니다.');
 }
 
+// ---------- 상세보기 모달 ----------
+function openDetailModal(id){
+  const a = assets.find(x=>x.id===id);
+  if(!a) return;
+  const body = $('#detailModalBody');
+  body.innerHTML = `
+    <h2>${escapeHtml(a.title)}</h2>
+    <div class="detail-badge-row">
+      <span class="tag">${escapeHtml(a.subtype ? a.subtype : a.type)}</span>
+      <span class="tag">${escapeHtml(a.site)}</span>
+      ${a.duration ? `<span class="tag">${escapeHtml(a.duration)}</span>` : ''}
+    </div>
+    ${a.thumbnail ? `<img class="detail-thumb" src="${escapeHtml(a.thumbnail)}" alt="" onerror="this.remove()">` : ''}
+    ${a.description ? `<div class="detail-row"><label>내용 설명</label><div class="val">${escapeHtml(a.description)}</div></div>` : ''}
+    <div class="detail-row"><label>제작자</label><div class="val">${escapeHtml(a.owner)}${a.contact ? ' · '+escapeHtml(a.contact) : ''}</div></div>
+    ${a.fileInfo ? `<div class="detail-row"><label>파일 정보</label><div class="val sub-val">${escapeHtml(a.fileInfo)}</div></div>` : ''}
+    ${(a.tags&&a.tags.length) ? `<div class="detail-row"><label>태그</label><div class="tags">${a.tags.map(t=>`<span class="tag">#${escapeHtml(t)}</span>`).join('')}</div></div>` : ''}
+    ${a.note ? `<div class="detail-row"><label>비고</label><div class="val sub-val">${escapeHtml(a.note)}</div></div>` : ''}
+    <div class="detail-row"><label>등록 정보</label><div class="val sub-val">${a.createdAt} 등록 · 다운로드 ${a.downloadCount||0}회</div></div>
+    <div class="modal-actions">
+      <button type="button" class="cancel-btn" id="closeDetailBtn">닫기</button>
+      <button type="button" class="submit-btn" id="detailOpenBtn">SharePoint에서 열기</button>
+    </div>
+  `;
+  $('#detailOpenBtn').onclick = ()=> openAsset(a.id);
+  $('#closeDetailBtn').onclick = ()=> $('#detailOverlay').style.display='none';
+  $('#detailOverlay').style.display='flex';
+}
+$('#detailOverlay').addEventListener('click',(e)=>{
+  if(e.target.id==='detailOverlay') $('#detailOverlay').style.display='none';
+});
+
 function renderRequests(){
   const el = $('#reqList');
   const list = [...requests].sort((x,y)=>(y.createdAt||'').localeCompare(x.createdAt||''));
@@ -701,7 +759,20 @@ function render(){
   $('#reqCount').textContent = requests.filter(r=>r.status==='대기').length;
   document.querySelectorAll('[data-special]').forEach(el=>{
     el.classList.toggle('active', activeSpecial===el.dataset.special);
-    el.onclick=()=>{ activeSpecial=el.dataset.special; render(); };
+    el.onclick=()=>{
+      const special = el.dataset.special;
+      if(special==='requests' && !adminUnlocked){
+        const pin = prompt('관리자 PIN을 입력하세요.');
+        if(pin===null) return; // 취소
+        if(pin !== ADMIN_PIN){
+          showToast('PIN이 올바르지 않습니다.');
+          return;
+        }
+        adminUnlocked = true;
+      }
+      activeSpecial = special;
+      render();
+    };
   });
 
   $('#pageTitle').textContent = currentPageTitle();
@@ -754,6 +825,7 @@ function openRegisterModal(assetToEdit){
     $('#f_location').value = assetToEdit.location || '';
     $('#f_thumb').value = assetToEdit.thumbnail || '';
     $('#f_fileinfo').value = assetToEdit.fileInfo || '';
+    $('#f_desc').value = assetToEdit.description || '';
     $('#f_tags').value = (assetToEdit.tags||[]).join(', ');
     $('#f_note').value = assetToEdit.note || '';
   }else{
@@ -792,6 +864,7 @@ $('#registerForm').addEventListener('submit', async (e)=>{
     location:$('#f_location').value.trim(),
     thumbnail:$('#f_thumb').value.trim(),
     fileInfo:$('#f_fileinfo').value.trim(),
+    description:$('#f_desc').value.trim(),
     duration: type==='영상 콘텐츠' ? $('#f_duration').value.trim() : '',
     tags:$('#f_tags').value.split(',').map(t=>t.trim()).filter(Boolean),
     note:$('#f_note').value.trim(),
