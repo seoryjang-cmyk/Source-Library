@@ -147,6 +147,8 @@
   .dl-btn:hover{color:#fff;border-color:var(--faint);}
   .perm-btn{flex:0 0 auto;padding:8px 10px;background:transparent;border:1px solid var(--border);color:var(--sub);}
   .perm-btn:hover{color:#fff;border-color:var(--faint);}
+  .edit-btn{flex:0 0 auto;padding:8px 10px;background:transparent;border:1px solid var(--lg-red-line);color:#fff;}
+  .edit-btn:hover{background:var(--lg-red-soft);}
   .del-btn{flex:0 0 32px;background:transparent;border:1px solid var(--border);color:var(--faint);}
   .del-btn:hover{color:var(--lg-red-bright);border-color:var(--lg-red-bright);}
 
@@ -238,6 +240,13 @@
         </span>
         <span class="count" id="favCount"></span>
       </div>
+      <div class="nav-item" data-special="mine">
+        <span class="left">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+          내 등록
+        </span>
+        <span class="count" id="mineCount"></span>
+      </div>
       <div class="nav-item" data-special="requests">
         <span class="left">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
@@ -293,8 +302,8 @@
 <!-- register modal -->
 <div class="overlay" id="registerOverlay" style="display:none;">
   <div class="modal">
-    <h2>자산 등록</h2>
-    <div class="sub">실제 파일이 아닌, 자산 정보와 SharePoint 링크를 등록합니다.</div>
+    <h2 id="registerModalTitle">자산 등록</h2>
+    <div class="sub" id="registerModalSub">실제 파일이 아닌, 자산 정보와 SharePoint 링크를 등록합니다.</div>
     <form id="registerForm">
       <div class="field"><label>자산명<span class="req">*</span></label><input required id="f_title" placeholder="예: 2026 여름 캠페인 티저 영상"></div>
       <div class="field-row">
@@ -332,7 +341,7 @@
       <div class="field"><label>비고 <span class="hint">(선택)</span></label><textarea id="f_note" placeholder="사용 시 참고사항"></textarea></div>
       <div class="modal-actions">
         <button type="button" class="cancel-btn" id="cancelRegister">취소</button>
-        <button type="submit" class="submit-btn">등록하기</button>
+        <button type="submit" class="submit-btn" id="registerSubmitBtn">등록하기</button>
       </div>
     </form>
   </div>
@@ -433,9 +442,10 @@ let requests = [];
 let activeCategory = "전체";
 let activeSubtype = null;
 let activeSite = "전체";
-let activeSpecial = null; // 'favorites' | 'requests' | null
+let activeSpecial = null; // 'favorites' | 'mine' | 'requests' | null
 let viewMode = "grid";
 let pendingRequestAsset = null;
+let editingAssetId = null;
 
 const $ = s=>document.querySelector(s);
 
@@ -455,9 +465,26 @@ function showToast(msg){
 }
 function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
+// 이 브라우저에서 등록한 자산을 추적합니다. (로그인 기능이 없으므로
+// "등록할 때 쓴 이 브라우저"를 기준으로 본인 여부를 판단합니다.
+// 다른 컴퓨터/브라우저에서는 본인이 등록한 자산이어도 수정 버튼이 보이지 않습니다.)
+function getMyTokens(){
+  try{ return JSON.parse(localStorage.getItem('my_asset_tokens')||'{}'); }catch(e){ return {}; }
+}
+function rememberMyAsset(assetId, token){
+  const map = getMyTokens();
+  map[assetId] = token;
+  try{ localStorage.setItem('my_asset_tokens', JSON.stringify(map)); }catch(e){}
+}
+function isMine(asset){
+  if(!asset) return false;
+  const map = getMyTokens();
+  return !!(map[asset.id] && asset.editToken && map[asset.id]===asset.editToken);
+}
+
 function countFor(type,subtype){
   if(subtype) return assets.filter(a=>a.type===TEMPLATE_KEY && a.subtype===subtype).length;
-  if(type==="전체") return assets.filter(a=>a.type==="영상 콘텐츠").length; // '전체' 탭은 영상만 보여주므로 카운트도 맞춤
+  if(type==="전체") return assets.length;
   return assets.filter(a=>a.type===type).length;
 }
 
@@ -521,11 +548,9 @@ function filteredAssets(){
   const q = $('#searchInput').value.trim().toLowerCase();
   let list = assets.filter(a=>{
     if(activeSpecial==='favorites' && !a.favorite) return false;
+    if(activeSpecial==='mine' && !isMine(a)) return false;
     if(!activeSpecial){
-      if(activeCategory==="전체"){
-        // '전체' 탭은 전체 자산이 아니라 영상 콘텐츠만 보여줍니다.
-        if(a.type!=="영상 콘텐츠") return false;
-      } else if(a.type!==activeCategory){
+      if(activeCategory!=="전체" && a.type!==activeCategory){
         return false;
       }
       if(activeCategory===TEMPLATE_KEY && activeSubtype && a.subtype!==activeSubtype) return false;
@@ -575,6 +600,7 @@ function renderGrid(){
         <div class="card-actions">
           <button class="open-btn" data-open="${a.id}">SharePoint에서 열기 ↗</button>
           <button class="dl-btn" data-dl="${a.id}" title="다운로드 링크로 열기 (SharePoint 접근 권한 필요)">⬇</button>
+          ${isMine(a) ? `<button class="edit-btn" data-edit="${a.id}" title="내가 등록한 자산 수정">수정</button>` : ''}
           <button class="perm-btn" data-req="${a.id}" title="권한이 없어 안 열리면 요청">권한요청</button>
           <button class="del-btn" data-del="${a.id}" title="삭제">✕</button>
         </div>
@@ -583,6 +609,10 @@ function renderGrid(){
   `).join('');
   grid.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openAsset(b.dataset.open));
   grid.querySelectorAll('[data-dl]').forEach(b=>b.onclick=()=>downloadAsset(b.dataset.dl));
+  grid.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{
+    const a = assets.find(x=>x.id===b.dataset.edit);
+    if(a) openRegisterModal(a);
+  });
   grid.querySelectorAll('[data-fav]').forEach(b=>b.onclick=()=>toggleFav(b.dataset.fav));
   grid.querySelectorAll('[data-req]').forEach(b=>b.onclick=()=>openRequestModal(b.dataset.req));
   grid.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>deleteAsset(b.dataset.del));
@@ -657,6 +687,7 @@ async function markDone(id){
 
 function currentPageTitle(){
   if(activeSpecial==='favorites') return '즐겨찾기';
+  if(activeSpecial==='mine') return '내 등록';
   if(activeSpecial==='requests') return '접근 권한 요청';
   if(activeCategory===TEMPLATE_KEY && activeSubtype) return `템플릿 · ${activeSubtype}`;
   return activeCategory;
@@ -666,6 +697,7 @@ function render(){
   renderCategoryNav();
   renderSiteNav();
   $('#favCount').textContent = assets.filter(a=>a.favorite).length;
+  $('#mineCount').textContent = assets.filter(isMine).length;
   $('#reqCount').textContent = requests.filter(r=>r.status==='대기').length;
   document.querySelectorAll('[data-special]').forEach(el=>{
     el.classList.toggle('active', activeSpecial===el.dataset.special);
@@ -699,9 +731,46 @@ document.querySelectorAll('.icon-toggle-group button').forEach(b=>{
   };
 });
 
-// register modal
-$('#openRegisterBtn').onclick=()=>{ $('#registerOverlay').style.display='flex'; };
-$('#cancelRegister').onclick=()=>{ $('#registerOverlay').style.display='none'; $('#registerForm').reset(); toggleFormFields(); };
+// register / edit modal
+function openRegisterModal(assetToEdit){
+  if(assetToEdit && !isMine(assetToEdit)){
+    showToast('본인이 등록한 자산만 수정할 수 있습니다.');
+    return;
+  }
+  editingAssetId = assetToEdit ? assetToEdit.id : null;
+  $('#registerForm').reset();
+
+  if(assetToEdit){
+    $('#registerModalTitle').textContent = '자산 수정';
+    $('#registerModalSub').textContent = '내가 등록한 자산 정보를 수정합니다.';
+    $('#registerSubmitBtn').textContent = '수정하기';
+    $('#f_title').value = assetToEdit.title || '';
+    $('#f_type').value = assetToEdit.type || '영상 콘텐츠';
+    $('#f_subtype').value = assetToEdit.subtype || '디자인 소스';
+    $('#f_site').value = assetToEdit.site || '평택';
+    $('#f_duration').value = assetToEdit.duration || '';
+    $('#f_owner').value = assetToEdit.owner || '';
+    $('#f_contact').value = assetToEdit.contact || '';
+    $('#f_location').value = assetToEdit.location || '';
+    $('#f_thumb').value = assetToEdit.thumbnail || '';
+    $('#f_fileinfo').value = assetToEdit.fileInfo || '';
+    $('#f_tags').value = (assetToEdit.tags||[]).join(', ');
+    $('#f_note').value = assetToEdit.note || '';
+  }else{
+    $('#registerModalTitle').textContent = '자산 등록';
+    $('#registerModalSub').textContent = '실제 파일이 아닌, 자산 정보와 SharePoint 링크를 등록합니다.';
+    $('#registerSubmitBtn').textContent = '등록하기';
+  }
+  toggleFormFields();
+  $('#registerOverlay').style.display='flex';
+}
+$('#openRegisterBtn').onclick=()=>openRegisterModal(null);
+$('#cancelRegister').onclick=()=>{
+  $('#registerOverlay').style.display='none';
+  $('#registerForm').reset();
+  editingAssetId = null;
+  toggleFormFields();
+};
 $('#f_type').addEventListener('change', toggleFormFields);
 function toggleFormFields(){
   const t = $('#f_type').value;
@@ -713,8 +782,7 @@ toggleFormFields();
 $('#registerForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const type = $('#f_type').value;
-  const asset = {
-    id:'a_'+Date.now(),
+  const fields = {
     title:$('#f_title').value.trim(),
     type,
     subtype: type===TEMPLATE_KEY ? $('#f_subtype').value : null,
@@ -727,17 +795,36 @@ $('#registerForm').addEventListener('submit', async (e)=>{
     duration: type==='영상 콘텐츠' ? $('#f_duration').value.trim() : '',
     tags:$('#f_tags').value.split(',').map(t=>t.trim()).filter(Boolean),
     note:$('#f_note').value.trim(),
-    favorite:false,
-    downloadCount:0,
-    createdAt:new Date().toISOString().slice(0,10)
   };
-  assets.push(asset);
-  await saveAssets();
+
+  if(editingAssetId){
+    const idx = assets.findIndex(a=>a.id===editingAssetId);
+    if(idx===-1){ showToast('수정할 자산을 찾지 못했습니다.'); return; }
+    if(!isMine(assets[idx])){ showToast('본인이 등록한 자산만 수정할 수 있습니다.'); return; }
+    assets[idx] = { ...assets[idx], ...fields };
+    await saveAssets();
+    showToast('자산 정보가 수정되었습니다.');
+  }else{
+    const editToken = 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+    const asset = {
+      id:'a_'+Date.now(),
+      ...fields,
+      editToken,
+      favorite:false,
+      downloadCount:0,
+      createdAt:new Date().toISOString().slice(0,10)
+    };
+    assets.push(asset);
+    rememberMyAsset(asset.id, editToken);
+    await saveAssets();
+    showToast('자산이 등록되었습니다.');
+  }
+
+  editingAssetId = null;
   $('#registerOverlay').style.display='none';
   $('#registerForm').reset();
   toggleFormFields();
   render();
-  showToast('자산이 등록되었습니다.');
 });
 
 // permission request modal
